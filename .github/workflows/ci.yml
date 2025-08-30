@@ -11,33 +11,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Build with Maven
+        with: { java-version: '17', distribution: 'temurin' }
+      - name: Build (skip tests)
         run: mvn -B -DskipTests package
 
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Run tests
         run: mvn test
 
   # Optional: build & push docker image
   # To enable, set secrets: REGISTRY, REGISTRY_USERNAME, REGISTRY_TOKEN
-#  docker:
-#    needs: build
-#    runs-on: ubuntu-latest
-#    if: always()
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Log in to registry
-#        run: |
-#          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-#
-#      - name: Build and push image
-#        run: |
-#          docker build -t ${{ secrets.REGISTRY }}/your-namespace/demo:latest .
-#          docker push ${{ secrets.REGISTRY }}/your-namespace/demo:latest
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to registry
+        run: |
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+
+      - name: Build and push image
+        run: |
+          docker build -t ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/demo:latest .
+          docker push ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/demo:latest

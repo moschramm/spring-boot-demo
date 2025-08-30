@@ -78,7 +78,7 @@ A minimal `.github/workflows/ci.yml` is included. It runs:
 - `mvn -B -DskipTests package`
 - `mvn test`
 
-The workflow contains an optional image build-and-push job. To enable image push, add repository secrets:
+The workflow contains an optional image build-and-push job. To enable image push, add repository secrets (Repo → Settings → Secrets and variables → Actions → New repository secret):
 
 - `REGISTRY` (e.g. `ghcr.io` or `docker.io`)
 - `REGISTRY_USERNAME`
