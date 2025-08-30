@@ -16,6 +16,7 @@ services:
     depends_on:
       - postgres
     environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-default}
       - JDBC_DATABASE_URL=jdbc:postgresql://postgres:5432/demo
       - POSTGRES_USER=demo
       - POSTGRES_PASSWORD=demo

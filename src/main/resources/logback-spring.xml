@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty name="appName" source="spring.application.name"/>
+    <springProperty name="activeProfile" source="spring.profiles.active"/>
+
+    <!-- Safe default console appender (fallback) -->
+    <appender name="STDOUT_GLOBAL" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n%ex{short}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- =========================
+         Development profile (non-prod)
+         Human readable console + optional rolling file
+         ========================= -->
+    <springProfile name="!prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n%ex{short}</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>logs/${appName:-app}.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>logs/${appName:-app}.%d{yyyy-MM-dd}.log</fileNamePattern>
+                <maxHistory>7</maxHistory>
+            </rollingPolicy>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n%ex{short}</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="ASYNC_DEV" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <queueSize>5000</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+        </appender>
+
+        <!-- root for dev (references ASYNC_DEV) -->
+        <root level="INFO">
+            <appender-ref ref="ASYNC_DEV"/>
+        </root>
+    </springProfile>
+
+    <!-- =========================
+         Production profile (prod)
+         JSON console output for collectors
+         ========================= -->
+    <springProfile name="prod">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app":"${appName:-app}","env":"${activeProfile:-prod}"}</customFields>
+            </encoder>
+        </appender>
+
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="JSON_CONSOLE"/>
+            <queueSize>5000</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+        </appender>
+
+        <!-- root for prod (references ASYNC_JSON) -->
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON"/>
+        </root>
+    </springProfile>
+
+    <!-- Fallback root: benutzt STDOUT_GLOBAL, falls kein Profil gesetzt ist -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT_GLOBAL"/>
+    </root>
+
+    <!-- Paket-spezifisches DEBUG für die App -->
+    <logger name="com.example" level="DEBUG"/>
+
+</configuration>
